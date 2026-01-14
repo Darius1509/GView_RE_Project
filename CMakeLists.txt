@@ -175,6 +175,7 @@ endif()
 
 if(NOT DEFINED CMAKE_TESTING_ENABLED)
     # Types supported by GView
+    add_subdirectory(Types/BASHS)
     add_subdirectory(Types/PE)
     add_subdirectory(Types/ICO)
     add_subdirectory(Types/CSV)
