@@ -59,9 +59,10 @@ namespace CharType
     constexpr uint8 Semicolon  = 10;
     constexpr uint8 ExprOpen   = 11;
     constexpr uint8 ExprClose  = 12;
+    constexpr uint8 NewLine    = 13;
 
-    uint8 Bash_Groups_IDs[] = { Invalid,  Invalid,  Invalid,  Invalid,   Invalid,  Invalid,    Invalid,  Invalid,  Invalid,  Space,    Space,    Invalid,
-                                Invalid,  Space,    Invalid,  Invalid,   Invalid,  Invalid,    Invalid,  Invalid,  Invalid,  Invalid,  Invalid,  Invalid,
+    uint8 Bash_Groups_IDs[] = { Invalid,  Invalid,  Invalid,  Invalid,   Invalid,  Invalid,    Invalid,  Invalid,  Invalid,  Space,    NewLine,  Invalid,
+                                Invalid,  NewLine,  Invalid,  Invalid,   Invalid,  Invalid,    Invalid,  Invalid,  Invalid,  Invalid,  Invalid,  Invalid,
                                 Invalid,  Invalid,  Invalid,  Invalid,   Invalid,  Invalid,    Invalid,  Invalid,  Space,    Operator, String,   Comment,
                                 Variable, Operator, Operator, String,    ExprOpen, ExprClose,  Operator, Operator, Invalid,  Operator, Word,     Operator,
                                 Number,   Number,   Number,   Number,    Number,   Number,     Number,   Number,   Number,   Number,   Invalid,  Semicolon,
@@ -299,12 +300,34 @@ void BASHSFile::Tokenize(uint32 start, uint32 end, const TextParser& text, Token
 
         switch (type) {
         case CharType::Space:
-            idx = text.ParseSpace(idx, SpaceType::All);
+            // Only parse spaces and tabs, not newlines
+            idx = text.ParseSpace(idx, SpaceType::SpaceAndTabs);
             break;
+
+        case CharType::NewLine: {
+            // Handle newlines explicitly
+            auto next = idx + 1;
+            // Handle CRLF or LFCR combinations
+            if (next < end) {
+                auto nextCh = text[next];
+                if ((ch == '\r' && nextCh == '\n') || (ch == '\n' && nextCh == '\r')) {
+                    next++;
+                }
+            }
+            
+            // Ensure the last token ends with a newline
+            auto lastToken = tokenList.GetLastToken();
+            if (lastToken.IsValid()) {
+                lastToken.UpdateAlignament(TokenAlignament::NewLineAfter);
+            }
+            
+            idx = next;
+            break;
+        }
 
         case CharType::Comment: {
             // Shebang la început
-            if (idx == 0 && ch == '#' && text[idx + 1] == '!') {
+            if (idx == start && ch == '#' && text[idx + 1] == '!') {
                 auto next = text.ParseUntilEndOfLine(idx);
                 tokenList.Add(
                       TokenType::Shebang,
@@ -429,7 +452,7 @@ void BASHSFile::Tokenize(uint32 start, uint32 end, const TextParser& text, Token
 
 void BASHSFile::PreprocessText(TextEditor& editor)
 {
-    // Bash nu necesită preprocessing special în acest moment
+    //No preprocess
 }
 
 void BASHSFile::GetTokenIDStringRepresentation(uint32 id, AppCUI::Utils::String& str)
@@ -507,14 +530,6 @@ bool BASHSFile::StringToContent(std::u16string_view string, AppCUI::Utils::Unico
 bool BASHSFile::ContentToString(std::u16string_view content, AppCUI::Utils::UnicodeStringBuilder& result)
 {
     NOT_IMPLEMENTED(false);
-}
-
-GView::Utils::JsonBuilderInterface* BASHSFile::GetSmartAssistantContext(const std::string_view& prompt, std::string_view displayPrompt)
-{
-    auto builder = GView::Utils::JsonBuilderInterface::Create();
-    builder->AddU16String("Name", obj->GetName());
-    builder->AddUInt("ContentSize", obj->GetData().GetSize());
-    return builder;
 }
 
 } // namespace GView::Type::BASHS
