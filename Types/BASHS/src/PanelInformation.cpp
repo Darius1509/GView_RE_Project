@@ -27,7 +27,7 @@ void Panels::Information::UpdateGeneralInformation()
 
 void Panels::Information::UpdateIssues()
 {
-    // Placeholder pentru viitoare validări
+    //placeholder
 }
 
 void Panels::Information::RecomputePanelsPositions()
