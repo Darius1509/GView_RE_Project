@@ -4,7 +4,7 @@ namespace GView::Type::BASHS
 {
 using namespace GView::View::LexicalViewer;
 
-// Keywords în bash
+//Keywords
 namespace KeywordsType
 {
     constexpr uint32 If       = 0;
@@ -25,7 +25,7 @@ namespace KeywordsType
     constexpr uint32 Time     = 15;
 } // namespace KeywordsType
 
-// Built-in commands comune
+//Built-in commands
 namespace BuiltinType
 {
     constexpr uint32 Echo     = 0;
@@ -190,14 +190,14 @@ uint32 BASHSFile::TokenizeWord(const TextParser& text, TokensList& tokenList, ui
     TokenAlignament align = TokenAlignament::AddSpaceBefore;
     TokenFlags tokenFlags = TokenFlags::None;
 
-    // Check if it's a keyword
+    //Check if it s a keyword
     if (IsKeyword(wordText.data(), length)) {
         tokType    = TokenType::Keyword;
         tokColor   = TokenColor::Keyword;
         align      = TokenAlignament::AddSpaceBefore | TokenAlignament::AddSpaceAfter;
         tokenFlags = TokenFlags::DisableSimilaritySearch;
     }
-    // Check if it's a builtin command
+    //Check if it s a builtin command
     else if (IsBuiltin(wordText.data(), length)) {
         tokType    = TokenType::Command;
         tokColor   = TokenColor::Keyword2;
@@ -210,14 +210,14 @@ uint32 BASHSFile::TokenizeWord(const TextParser& text, TokensList& tokenList, ui
 
 uint32 BASHSFile::TokenizeVariable(const TextParser& text, TokensList& tokenList, uint32 pos)
 {
-    // $ variable sau ${variable}
+    //$variable sau ${variable}
     auto next = pos + 1;
 
     if (text[next] == '{') {
-        // ${variable} format - parse until }
+        //${variable} format - parse until }
         next = text.ParseUntilNextCharacterAfterText(next, "}", false);
     } else {
-        // $variable format
+        //$variable format
         next = text.Parse(next, [](char16 ch) { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_'; });
     }
 
@@ -233,7 +233,7 @@ uint32 BASHSFile::TokenizeOperator(const TextParser& text, TokensList& tokenList
     TokenColor tokColor   = TokenColor::Operator;
     TokenAlignament align = TokenAlignament::AddSpaceBefore | TokenAlignament::AddSpaceAfter;
 
-    // Check pentru operatori compuși
+    //Check composite op
     auto ch2 = text[next];
 
     if (ch == '|') {
@@ -268,7 +268,7 @@ uint32 BASHSFile::TokenizeOperator(const TextParser& text, TokensList& tokenList
 
 void BASHSFile::BuildBlocks(SyntaxManager& syntax)
 {
-    // Build blocks pentru structuri ca { ... }
+    //Build blocks pentru structuri ca { ... }
     TokenIndexStack stBlocks;
     auto len = syntax.tokens.Len();
 
@@ -300,14 +300,14 @@ void BASHSFile::Tokenize(uint32 start, uint32 end, const TextParser& text, Token
 
         switch (type) {
         case CharType::Space:
-            // Only parse spaces and tabs, not newlines
+            //Only parse spaces and tabs, not newlines
             idx = text.ParseSpace(idx, SpaceType::SpaceAndTabs);
             break;
 
         case CharType::NewLine: {
-            // Handle newlines explicitly
+            //Handle newlines explicitly
             auto next = idx + 1;
-            // Handle CRLF or LFCR combinations
+            //Handle CRLF or LFCR combinations
             if (next < end) {
                 auto nextCh = text[next];
                 if ((ch == '\r' && nextCh == '\n') || (ch == '\n' && nextCh == '\r')) {
@@ -315,7 +315,7 @@ void BASHSFile::Tokenize(uint32 start, uint32 end, const TextParser& text, Token
                 }
             }
             
-            // Ensure the last token ends with a newline
+            //Ensure the last token ends with a newline
             auto lastToken = tokenList.GetLastToken();
             if (lastToken.IsValid()) {
                 lastToken.UpdateAlignament(TokenAlignament::NewLineAfter);
@@ -326,7 +326,7 @@ void BASHSFile::Tokenize(uint32 start, uint32 end, const TextParser& text, Token
         }
 
         case CharType::Comment: {
-            // Shebang la început
+            //Shebang
             if (idx == start && ch == '#' && text[idx + 1] == '!') {
                 auto next = text.ParseUntilEndOfLine(idx);
                 tokenList.Add(
@@ -339,7 +339,7 @@ void BASHSFile::Tokenize(uint32 start, uint32 end, const TextParser& text, Token
                       TokenFlags::DisableSimilaritySearch);
                 idx = next;
             } else {
-                // Comment normal
+                //Comment
                 auto next = text.ParseUntilEndOfLine(idx);
                 tokenList.Add(
                       TokenType::Comment,
